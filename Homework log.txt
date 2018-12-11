@@ -25,3 +25,62 @@ Result: { "name" : "Silver Krust West Indian Restaurant" }
 Query:  db.restaurants.find({cuisine:"Seafood",grades:{$elemMatch:{grade:"B","date":{$gte:new Date("2014-02-01"), $lte:new Date("2014-03-01")}}}},{borough:1})
 Result: { "_id" : ObjectId("5c0e34091a80a4296e4a6dbb"), "borough" : "Bronx" }
 	{ "_id" : ObjectId("5c0e34091a80a4296e4a7033"), "borough" : "Manhattan" }
+
+
+4.1 
+> db.restaurants.createIndex({name:1})
+{
+        "createdCollectionAutomatically" : false,
+        "numIndexesBefore" : 2,
+        "numIndexesAfter" : 3,
+        "ok" : 1
+}
+> db.restaurants.find({ name: "Glorious Food" }).explain()
+{
+        "queryPlanner" : {
+                "plannerVersion" : 1,
+                "namespace" : "frontcamp.restaurants",
+                "indexFilterSet" : false,
+                "parsedQuery" : {
+                        "name" : {
+                                "$eq" : "Glorious Food"
+                        }
+                },
+                "winningPlan" : {
+                        "stage" : "FETCH",
+                        "inputStage" : {
+                                "stage" : "IXSCAN",
+                                "keyPattern" : {
+                                        "name" : 1
+                                },
+                                "indexName" : "name_1",
+                                "isMultiKey" : false,
+                                "multiKeyPaths" : {
+                                        "name" : [ ]
+                                },
+                                "isUnique" : false,
+                                "isSparse" : false,
+                                "isPartial" : false,
+                                "indexVersion" : 2,
+                                "direction" : "forward",
+                                "indexBounds" : {
+                                        "name" : [
+                                                "[\"Glorious Food\", \"Glorious Food\"]"
+                                        ]
+                                }
+                        }
+                },
+                "rejectedPlans" : [ ]
+        },
+        "serverInfo" : {
+                "host" : "EPBYMINW2480",
+                "port" : 27017,
+                "version" : "4.0.4",
+                "gitVersion" : "f288a3bdf201007f3693c58e140056adf8b04839"
+        },
+        "ok" : 1
+}
+
+4.2 
+> db.restaurants.dropIndex( "name_1" )
+{ "nIndexesWas" : 2, "ok" : 1 }
