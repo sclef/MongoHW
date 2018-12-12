@@ -319,6 +319,7 @@ Result: { "_id" : ObjectId("5c0e34091a80a4296e4a6dbb"), "borough" : "Bronx" }
 db.restaurants.find({"grades.8.score":{$lt:7}},{_id:0, name:1}).explain()
 
 this 3 is not working:
-db.restaurants.createIndex({name:1},{partialFilterExpression:{"grades.score":{$lt:7}}})
-db.restaurants.createIndex({name:1},{partialFilterExpression:{"grades.8.score":{$lt:7}}})
-db.restaurants.createIndex({name:1,"grades.score":1})
+db.restaurants.createIndex({name:1},{partialFilterExpression:{"grades.score":{$lt:7}}}) - not working
+db.restaurants.createIndex({name:1},{partialFilterExpression:{"grades.8.score":{$lt:7}}}) - not working
+db.restaurants.createIndex({name:1,"grades.score":1}) - not working
+db.restaurants.createIndex({ "grades.score":1}) - working but seems like too wide index
