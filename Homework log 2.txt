@@ -10,14 +10,18 @@ Log: 	{ "class" : "F", "total" : 140343 }
 2. What are the top 3 destination cities outside of the United States (destCountry field, not
 included) with the highest average passengers count? Show result as { "avgPassengers" :
 2312.380, "city" : "Minsk, Belarus" }
-Query:
-Log:
+Query: db.airlines.aggregate([{$group:{_id:'$destCity', total:{$avg:'$passengers'}}},{$sort:{total:-1}},{$project:{_id:0,'avgPassengers':'$total',city:'$_id'}},{$limit:3}])
+Log:	{ "avgPassengers" : 8052.380952380952, "city" : "Abu Dhabi, United Arab Emirates" }
+	{ "avgPassengers" : 7743.661683713612, "city" : "Atlanta, GA" }
+	{ "avgPassengers" : 7176.596638655462, "city" : "Dubai, United Arab Emirates" }
 
 
 3. Which carriers provide flights to Latvia (destCountry)? Show result as one document {
 "_id" : "Latvia", "carriers" : [ "carrier1", " carrier2", …] }
-Query:
-Log:
+db.airlines.aggregate([{$bucketAuto:{groupBy:'$destCountry',buckets:1,output:{country:{$first:'$destCountry'},cariers:{$push:'$carrier'}}}}])
+
+Query: db.airlines.aggregate([{$group:{_id:'$destCountry', carriers:{$addToSet:'$carrier'}}},{$project:{carriers:'$carriers'}},{$match:{_id:"Latvia"}}])
+Log:	{ "_id" : "Latvia", "carriers" : [ "Uzbekistan Airways", "Blue Jet SP Z o o", "JetClub AG" ] }
 
 
 4. What are the carriers which flue the most number of passengers from the United State to either
