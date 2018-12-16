@@ -322,4 +322,5 @@ this 3 is not working:
 db.restaurants.createIndex({name:1},{partialFilterExpression:{"grades.score":{$lt:7}}}) - not working
 db.restaurants.createIndex({name:1},{partialFilterExpression:{"grades.8.score":{$lt:7}}}) - not working
 db.restaurants.createIndex({name:1,"grades.score":1}) - not working
+db.restaurants.createIndex{"grades.8.score": 1, name: 1 })
 db.restaurants.createIndex({ "grades.score":1}) - working but seems like too wide index
