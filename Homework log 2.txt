@@ -10,7 +10,7 @@ Log: 	{ "class" : "F", "total" : 140343 }
 2. What are the top 3 destination cities outside of the United States (destCountry field, not
 included) with the highest average passengers count? Show result as { "avgPassengers" :
 2312.380, "city" : "Minsk, Belarus" }
-Query: db.airlines.aggregate([{$group:{_id:'$destCity', total:{$avg:'$passengers'}}},{$sort:{total:-1}},{$project:{_id:0,'avgPassengers':'$total',city:'$_id'}},{$limit:3}])
+Query: db.airlines.aggregate([{$group:{_id:{city:'$destCity'}, total:{$avg:'$passengers'}}},{$sort:{total:-1}},{$project:{_id:0,'avgPassengers':'$total',city:'$_id'}},{$limit:3}])
 Log:	{ "avgPassengers" : 8052.380952380952, "city" : "Abu Dhabi, United Arab Emirates" }
 	{ "avgPassengers" : 7743.661683713612, "city" : "Atlanta, GA" }
 	{ "avgPassengers" : 7176.596638655462, "city" : "Dubai, United Arab Emirates" }
@@ -18,21 +18,21 @@ Log:	{ "avgPassengers" : 8052.380952380952, "city" : "Abu Dhabi, United Arab Emi
 
 3. Which carriers provide flights to Latvia (destCountry)? Show result as one document {
 "_id" : "Latvia", "carriers" : [ "carrier1", " carrier2", …] }
-Query: db.airlines.aggregate([{$group:{_id:'$destCountry', carriers:{$addToSet:'$carrier'}}},{$project:{carriers:'$carriers'}},{$match:{_id:"Latvia"}}])
+Query: db.airlines.aggregate([{$match:{destCountry:"Latvia"}},{$group:{_id:'$destCountry', carriers:{$addToSet:'$carrier'}}}])
 Log:	{ "_id" : "Latvia", "carriers" : [ "Uzbekistan Airways", "Blue Jet SP Z o o", "JetClub AG" ] }
 
 
 4. What are the carriers which flue the most number of passengers from the United State to either
 Greece, Italy or Spain? Find top 10 carriers, but provide the last 7 carriers (do not include the
 first 3). Show result as { "_id" : "<carrier>", "total" : 999}
-Query: db.airlines.aggregate([{$match:{$and:[{originCountry:'United States'},{$or:[{destCountry:'Greece'},{destCountry:'Italy'},{destCountry:'Spain'}]}]}},{$group:{_id:'$carrier', total:{$sum:'$passengers'}}},{$sort:{total:-1}},{$project:{'totalPassengers':'$total'}},{$limit:10},{ $skip : 3 }])
-Log:	{ "_id" : "Compagnia Aerea Italiana", "totalPassengers" : 280256 }
-	{ "_id" : "United Air Lines Inc.", "totalPassengers" : 229936 }
-	{ "_id" : "Emirates", "totalPassengers" : 100903 }
-	{ "_id" : "Air Europa", "totalPassengers" : 94968 }
-	{ "_id" : "Meridiana S.p.A", "totalPassengers" : 20308 }
-	{ "_id" : "Norwegian Air Shuttle ASA", "totalPassengers" : 13344 }
-	{ "_id" : "VistaJet Limited", "totalPassengers" : 183 }
+Query: db.airlines.aggregate([{$match: {originCountry: "United States",destCountry:{$in: ["Greece", "Spain", "Italy"]}}},{$group: {_id: "$carrier",total: { $max: "$passengers" }}},{$sort: {total: -1},},{$limit: 10},{$skip: 3}])
+Log:	{ "_id" : "Emirates", "total" : 12144 }
+	{ "_id" : "Air Europa", "total" : 8086 }
+	{ "_id" : "American Airlines Inc.", "total" : 8065 }
+	{ "_id" : "United Air Lines Inc.", "total" : 7313 }
+	{ "_id" : "Meridiana S.p.A", "total" : 6173 }
+	{ "_id" : "Norwegian Air Shuttle ASA", "total" : 2381 }
+	{ "_id" : "Atlas Air Inc.", "total" : 85 }
 
 
 5. Find the city (originCity) with the highest sum of passengers for each state (originState)
@@ -40,11 +40,9 @@ of the United States (originCountry). Provide the city for the first 5 states or
 alphabetically (you should see the city for Alaska, Arizona and etc). Show result as {
 "totalPassengers" : 999, "location" : { "state" : "abc", "city" : "xyz"
 } }
-Query:db.airlines.aggregate([{$match:{originCountry:'United States'}},{$group:{_id:'$originCity', total:{$sum:'$passengers'}, originState:{$first:'$originState'}}},{$sort:{total:-1}},{$limit:5},{$project:{_id:0,'totalPassengers':'$total',location:{"state":'$originState',city:'$_id'}}},{$sort:{'location.state':1}}])
-Log:	{ "totalPassengers" : 23701556, "location" : { "state" : "California", "city" : "Los Angeles, CA" } }
-	{ "totalPassengers" : 29416565, "location" : { "state" : "Georgia", "city" : "Atlanta, GA" } }
-	{ "totalPassengers" : 28035755, "location" : { "state" : "Illinois", "city" : "Chicago, IL" } }
-	{ "totalPassengers" : 25266639, "location" : { "state" : "New York", "city" : "New York, NY" } }
-	{ "totalPassengers" : 18408792, "location" : { "state" : "Texas", "city" : "Dallas/Fort Worth, TX" } }
-
-
+Query:	db.airlines.aggregate([{$match:{originCountry:"United States"}},{$group:{_id:{originState: "$originState",originCity: "$originCity"},totalPassengers: { $sum: "$passengers" }}},{$sort: {totalPassengers: -1},},{$group: {_id: {originState: "$_id.originState"},totalPassengers: { $max: "$totalPassengers" },city: {$first: "$_id.originCity"}}},{$sort: {"_id.originState": 1},},{$limit: 5},{$project: {location: {state: "$_id.originState",city: "$city"},totalPassengers: 1,_id: 0}}])
+Log:	{ "totalPassengers" : 760120, "location" : { "state" : "Alabama", "city" : "Birmingham, AL" } }
+	{ "totalPassengers" : 1472404, "location" : { "state" : "Alaska", "city" : "Anchorage, AK" } }
+	{ "totalPassengers" : 13152753, "location" : { "state" : "Arizona", "city" : "Phoenix, AZ" } }
+	{ "totalPassengers" : 571452, "location" : { "state" : "Arkansas", "city" : "Little Rock, AR" } }
+	{ "totalPassengers" : 23701556, "location" : { "state" : "California", "city" : "Los Angeles, CA" } }
